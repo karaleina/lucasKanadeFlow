@@ -8,6 +8,7 @@ import math
 
 filename = "4_oddech_przykrywka.avi"
 filepath = os.path.abspath("C:\\Users\\ImioUser\\Desktop\\K&A\\pylon_spekle\\" + filename)
+filename_save = "test.h5"
 
 cap = cv2.VideoCapture(filepath)
 
@@ -37,7 +38,9 @@ print("Znaleziona liczba śledzonych punktów"
 mask = np.zeros_like(old_frame)
 
 # Zmienne
-mean_in_all_frames = []
+all = []
+mean_x_all_frames = []
+mean_y_all_frames = []
 angles_in_all_frames = []
 speed_in_all_frames = []
 
@@ -77,7 +80,8 @@ speed_in_all_frames = []
 #         frame = cv2.circle(frame,(a,b),5,color[i].tolist(),-1)
 #
 #     # Adding current mean to the list of all means
-#     mean_in_all_frames.append([np.mean(current_a), np.mean(current_b)])
+#     mean_x_all_frames.append(np.mean(current_a))
+#     mean_y_all_frames.append(np.mean(current_b))
 #     angles_in_all_frames.append(math.atan((b-d)/float(a-c)))
 #     speed_in_all_frames.append(math.sqrt(math.pow((b-d), 2) + math.pow((a-c),2)))
 #
@@ -93,43 +97,36 @@ speed_in_all_frames = []
 # cv2.destroyAllWindows()
 # cap.release()
 #
-# ###########################################################
-filename_save_np1 = "test_save1.h5"
-filename_save_np2 = "test_save2.h5"
-filename_save_np3 = "test_save3.h5"
-
-# #Write
+# ##########################################################
 #
-# with h5py.File(filename_save_np1, 'w') as hf:
-#     hf.create_dataset("mean", data=mean_in_all_frames)
-#
-# with h5py.File(filename_save_np2, 'w') as hf:
-#     hf.create_dataset("angles", data=angles_in_all_frames)
-#
-# with h5py.File(filename_save_np3, 'w') as hf:
-#     hf.create_dataset("speed", data=speed_in_all_frames)
-#
-# #numpy_to_save = np.array([[mean_in_all_frames], [angles_in_all_frames], [speed_in_all_frames]])
 #
 
-#Read
-with h5py.File(filename_save_np1, 'r') as hf:
-    mean_in_all_frames = hf['mean'][:]
+# # Write
+# all = np.zeros(shape=(4,len(angles_in_all_frames)))
+# all[2,:] = angles_in_all_frames
+# all[3,:] = speed_in_all_frames
+# all[0,:] = mean_x_all_frames
+# all[1,:] = mean_y_all_frames
+#
+#
+# with h5py.File(filename_save, 'w') as hf:
+#     hf.create_dataset("all", data=all)
 
-with h5py.File(filename_save_np2, 'r') as hf:
-    angles_in_all_frames = hf['angles'][:]
+# Read
+with h5py.File(filename_save, 'r') as hf:
+    all = hf['all'][:]
 
-with h5py.File(filename_save_np3, 'r') as hf:
-    speed_in_all_frames = hf['speed'][:]
+print(all)
+print(type(all))
 
+mean_x = all[0,:]
+mean_y = all[1,:]
+angles_in_all_frames = all[2,:]
+speed_in_all_frames = all[3,:]
 
-
-plt.figure(1)
-plt.plot(mean_in_all_frames)
-plt.show()
 
 # convert to matrix
-train_data = np.mat(mean_in_all_frames)
+train_data = np.mat([mean_x,mean_y])
 pca_components = 1
 
 # reduce both train and test data
@@ -137,7 +134,7 @@ pca = decomposition.PCA(n_components=pca_components).fit(train_data)
 X_out_pca = pca.transform(train_data)
 
 plt.subplot(2,2,1)
-plt.plot(mean_in_all_frames[:,0], mean_in_all_frames[:,1])
+plt.plot(mean_x, mean_y)
 plt.title("Średni ruch spekli w wejściowych współrzędnych")
 
 plt.subplot(2,2,2)
