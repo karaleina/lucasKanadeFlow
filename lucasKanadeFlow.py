@@ -41,86 +41,87 @@ mean_in_all_frames = []
 angles_in_all_frames = []
 speed_in_all_frames = []
 
-while(cap.isOpened()):
-    ret,frame = cap.read()
-
-    if(frame == None):
-        break
-
-    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    # calculate optical flow
-    p1, st, err = cv2.calcOpticalFlowPyrLK(old_gray, frame_gray, p0, None, **lk_params)
-
-    # Select good points
-    good_new = p1[st==1]
-    good_old = p0[st==1]
-
-    # Here is the list of current changes in a and b for all piramids
-    current_a = []
-    current_b = []
-    current_c = []
-    current_d = []
-
-    # draw the tracks
-    for i,(new,old) in enumerate(zip(good_new,good_old)):
-        a,b = new.ravel()
-        c,d = old.ravel()
-
-        # Adding parameters to the list of current changes in a and b for all piramids
-        current_a.append(a)
-        current_b.append(b)
-        current_c.append(c)
-        current_d.append(d)
-
-        mask = cv2.line(mask, (a,b),(c,d), color[i].tolist(), 2)
-        frame = cv2.circle(frame,(a,b),5,color[i].tolist(),-1)
-
-    # Adding current mean to the list of all means
-    mean_in_all_frames.append([np.mean(current_a), np.mean(current_b)])
-    angles_in_all_frames.append(math.atan((b-d)/float(a-c)))
-    speed_in_all_frames.append(math.sqrt(math.pow((b-d), 2) + math.pow((a-c),2)))
-
-    img = cv2.add(frame,mask)
-    cv2.imshow('frame',img)
-    k = cv2.waitKey(30) & 0xff
-    if k == 27:
-        break
-    # Now update the previous frame and previous points
-    old_gray = frame_gray.copy()
-    p0 = good_new.reshape(-1,1,2)
-
-cv2.destroyAllWindows()
-cap.release()
-
-###########################################################
+# while(cap.isOpened()):
+#     ret,frame = cap.read()
+#
+#     if(frame == None):
+#         break
+#
+#     frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+#
+#     # calculate optical flow
+#     p1, st, err = cv2.calcOpticalFlowPyrLK(old_gray, frame_gray, p0, None, **lk_params)
+#
+#     # Select good points
+#     good_new = p1[st==1]
+#     good_old = p0[st==1]
+#
+#     # Here is the list of current changes in a and b for all piramids
+#     current_a = []
+#     current_b = []
+#     current_c = []
+#     current_d = []
+#
+#     # draw the tracks
+#     for i,(new,old) in enumerate(zip(good_new,good_old)):
+#         a,b = new.ravel()
+#         c,d = old.ravel()
+#
+#         # Adding parameters to the list of current changes in a and b for all piramids
+#         current_a.append(a)
+#         current_b.append(b)
+#         current_c.append(c)
+#         current_d.append(d)
+#
+#         mask = cv2.line(mask, (a,b),(c,d), color[i].tolist(), 2)
+#         frame = cv2.circle(frame,(a,b),5,color[i].tolist(),-1)
+#
+#     # Adding current mean to the list of all means
+#     mean_in_all_frames.append([np.mean(current_a), np.mean(current_b)])
+#     angles_in_all_frames.append(math.atan((b-d)/float(a-c)))
+#     speed_in_all_frames.append(math.sqrt(math.pow((b-d), 2) + math.pow((a-c),2)))
+#
+#     img = cv2.add(frame,mask)
+#     cv2.imshow('frame',img)
+#     k = cv2.waitKey(30) & 0xff
+#     if k == 27:
+#         break
+#     # Now update the previous frame and previous points
+#     old_gray = frame_gray.copy()
+#     p0 = good_new.reshape(-1,1,2)
+#
+# cv2.destroyAllWindows()
+# cap.release()
+#
+# ###########################################################
 filename_save_np1 = "test_save1.h5"
 filename_save_np2 = "test_save2.h5"
 filename_save_np3 = "test_save3.h5"
 
-#numpy_to_save = np.array([[mean_in_all_frames], [angles_in_all_frames], [speed_in_all_frames]])
+# #Write
+#
+# with h5py.File(filename_save_np1, 'w') as hf:
+#     hf.create_dataset("mean", data=mean_in_all_frames)
+#
+# with h5py.File(filename_save_np2, 'w') as hf:
+#     hf.create_dataset("angles", data=angles_in_all_frames)
+#
+# with h5py.File(filename_save_np3, 'w') as hf:
+#     hf.create_dataset("speed", data=speed_in_all_frames)
+#
+# #numpy_to_save = np.array([[mean_in_all_frames], [angles_in_all_frames], [speed_in_all_frames]])
+#
 
-with h5py.File(filename_save_np1, 'w') as hf:
-    hf.create_dataset("numpy-to-save", data=mean_in_all_frames)
-
+#Read
 with h5py.File(filename_save_np1, 'r') as hf:
-    mean_in_all_frames = hf['numpy-to-save'][:]
-
-with h5py.File(filename_save_np2, 'w') as hf:
-    hf.create_dataset("numpy-to-save", data=angles_in_all_frames)
+    mean_in_all_frames = hf['mean'][:]
 
 with h5py.File(filename_save_np2, 'r') as hf:
-    angles_in_all_frames = hf['numpy-to-save'][:]
-
-with h5py.File(filename_save_np3, 'w') as hf:
-    hf.create_dataset("numpy-to-save", data=speed_in_all_frames)
+    angles_in_all_frames = hf['angles'][:]
 
 with h5py.File(filename_save_np3, 'r') as hf:
-    speed_in_all_frames = hf['numpy-to-save'][:]
+    speed_in_all_frames = hf['speed'][:]
 
-# mean_in_all_frames = numpy_to_save[0]
-# angles_in_all_frames = numpy_to_save[1]
-# speed_in_all_frames = numpy_to_save[2]
 
 
 plt.figure(1)
@@ -135,9 +136,9 @@ pca_components = 1
 pca = decomposition.PCA(n_components=pca_components).fit(train_data)
 X_out_pca = pca.transform(train_data)
 
-# plt.subplot(2,2,1)
-# plt.plot(mean_in_all_frames[:,0], mean_in_all_frames[:,1])
-# plt.title("Średni ruch spekli w wejściowych współrzędnych")
+plt.subplot(2,2,1)
+plt.plot(mean_in_all_frames[:,0], mean_in_all_frames[:,1])
+plt.title("Średni ruch spekli w wejściowych współrzędnych")
 
 plt.subplot(2,2,2)
 plt.plot(X_out_pca)
